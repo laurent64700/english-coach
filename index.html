@@ -149,8 +149,12 @@ function loadVoices(){
   if(!voices.length) voices = all.slice().sort((a, b) => rank(a) - rank(b));
   const sel = $('#voix');
   const saved = store('voix');
-  const ok = voices.some(v => v.name === saved);
-  sel.innerHTML = voices.map((v, i) => `<option value="${esc(v.name)}"${(ok ? v.name === saved : i === 0) ? ' selected' : ''}>${esc(v.name)} (${esc(v.lang)})${MALE.test(v.name) ? ' ♂' : ''}</option>`).join('');
+  const savedVoice = voices.find(v => v.name === saved);
+  // prefer top-ranked (male) voice over a saved female one
+  const useDefault = !savedVoice || (rank(savedVoice) > rank(voices[0]) + 0.5);
+  if(useDefault && voices[0]) store('voix', voices[0].name);
+  const chosen = useDefault ? voices[0]?.name : saved;
+  sel.innerHTML = voices.map(v => `<option value="${esc(v.name)}"${v.name === chosen ? ' selected' : ''}>${esc(v.name)} (${esc(v.lang)})${MALE.test(v.name) ? ' ♂' : ''}</option>`).join('');
 }
 function startVoicesPolling(){
   if(!('speechSynthesis' in window)) return;
