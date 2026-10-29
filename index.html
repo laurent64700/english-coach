@@ -148,12 +148,15 @@ function loadVoices(){
   voices = all.filter(v => /^en/i.test(v.lang)).sort((a, b) => rank(a) - rank(b));
   if(!voices.length) voices = all.slice().sort((a, b) => rank(a) - rank(b));
   const sel = $('#voix');
+  // explicit male preference — find best male voice or fall back to voices[0]
+  const bestMale = voices.find(v => MALE.test(v.name));
+  const ideal = bestMale || voices[0];
   const saved = store('voix');
   const savedVoice = voices.find(v => v.name === saved);
-  // prefer top-ranked (male) voice over a saved female one
-  const useDefault = !savedVoice || (rank(savedVoice) > rank(voices[0]) + 0.5);
-  if(useDefault && voices[0]) store('voix', voices[0].name);
-  const chosen = useDefault ? voices[0]?.name : saved;
+  // use saved only if it's at least as good as ideal (within 0.5 rank points)
+  const useIdeal = !savedVoice || rank(savedVoice) > rank(ideal) + 0.5;
+  const chosen = useIdeal ? ideal?.name : saved;
+  if(useIdeal && ideal) store('voix', ideal.name);
   sel.innerHTML = voices.map(v => `<option value="${esc(v.name)}"${v.name === chosen ? ' selected' : ''}>${esc(v.name)} (${esc(v.lang)})${MALE.test(v.name) ? ' ♂' : ''}</option>`).join('');
 }
 function startVoicesPolling(){
